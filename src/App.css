@@ -1,0 +1,116 @@
+.experience {
+  position: relative;
+  min-height: 100vh;
+  background: #f5f2ea;
+}
+
+.viewport-stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #f5f2ea;
+  isolation: isolate;
+}
+
+.viewport-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor:
+    url('/assets/brush-cursor.svg') 7 25,
+    crosshair;
+  touch-action: pan-y;
+}
+
+.edo-button-wrap {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(1.25rem, 4vh, 2.75rem);
+  z-index: 4;
+  width: min(calc(100vw - 2rem), 21rem);
+  transform: translateX(-50%);
+  transition:
+    opacity 480ms ease,
+    transform 480ms ease;
+}
+
+.is-transitioning .edo-button-wrap {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0.65rem);
+}
+
+.edo-button {
+  position: relative;
+  width: 100%;
+  min-height: 3.35rem;
+  border: 2px solid #111;
+  border-radius: 0;
+  color: #111;
+  background:
+    linear-gradient(90deg, rgba(17, 17, 17, 0.08), transparent 14%, transparent 86%, rgba(17, 17, 17, 0.08)),
+    #f5f2ea;
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 242, 234, 0.72),
+    inset 0 -0.42rem 0 rgba(17, 17, 17, 0.06),
+    0 0.45rem 0 rgba(17, 17, 17, 0.9);
+  cursor:
+    url('/assets/brush-cursor.svg') 7 25,
+    pointer;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: none;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    background-color 160ms ease;
+}
+
+.edo-button::before,
+.edo-button::after {
+  position: absolute;
+  top: 0.42rem;
+  bottom: 0.42rem;
+  width: 0.28rem;
+  border-inline: 1px solid #111;
+  content: '';
+  opacity: 0.72;
+}
+
+.edo-button::before {
+  left: 0.52rem;
+}
+
+.edo-button::after {
+  right: 0.52rem;
+}
+
+.edo-button:hover,
+.edo-button:focus-visible {
+  background-color: #fffbf1;
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 242, 234, 0.72),
+    inset 0 -0.36rem 0 rgba(17, 17, 17, 0.08),
+    0 0.34rem 0 rgba(17, 17, 17, 0.9);
+  transform: translateY(0.1rem);
+}
+
+.edo-button:focus-visible {
+  outline: 3px double #111;
+  outline-offset: 0.28rem;
+}
+
+.edo-button:active {
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 242, 234, 0.72),
+    inset 0 0.18rem 0 rgba(17, 17, 17, 0.08),
+    0 0.1rem 0 rgba(17, 17, 17, 0.9);
+  transform: translateY(0.28rem);
+}
+
+.edo-button:disabled {
+  cursor: default;
+}
