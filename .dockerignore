@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+playwright-report
+test-results
+artifacts
+tmp
+
+.git
+.gitignore
+.DS_Store
+
+*.log
+*.local
