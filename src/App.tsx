@@ -1,6 +1,8 @@
 import { Canvas } from '@react-three/fiber'
 import { Suspense, useEffect, useState } from 'react'
+import { AmbientAudioControl } from './AmbientAudioControl'
 import { EdoScene } from './EdoScene'
+import { FpsCounter } from './FpsCounter'
 import { UkiyoELandscape } from './UkiyoELandscape'
 import './App.css'
 
@@ -11,11 +13,13 @@ function App() {
     window.location.pathname === '/edo' ? 'edo' : 'landscape',
   )
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isKotoFocus, setIsKotoFocus] = useState(false)
 
   useEffect(() => {
     const handlePopState = () => {
       setSceneRoute(window.location.pathname === '/edo' ? 'edo' : 'landscape')
       setIsTransitioning(false)
+      setIsKotoFocus(false)
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -35,22 +39,24 @@ function App() {
     window.history.pushState({}, '', '/edo')
     setSceneRoute('edo')
     setIsTransitioning(false)
+    setIsKotoFocus(false)
   }
 
   return (
     <main
-      className={`experience${isTransitioning ? ' is-transitioning' : ''}`}
+      className={`experience${isTransitioning ? ' is-transitioning' : ''}${isKotoFocus ? ' is-koto-focus' : ''}`}
       aria-label="Minimal black and white ukiyo-e landscape"
     >
       <div className="viewport-stage">
         {sceneRoute === 'edo' ? (
           <Canvas
             camera={{ position: [0, 0.25, 9.5], fov: 38, near: 0.1, far: 80 }}
-            dpr={[1, 2]}
-            gl={{ antialias: true, alpha: false }}
+            dpr={[1, 1.25]}
+            frameloop="always"
+            gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
           >
             <Suspense fallback={null}>
-              <EdoScene />
+              <EdoScene focusMode={isKotoFocus} />
             </Suspense>
           </Canvas>
         ) : (
@@ -68,6 +74,8 @@ function App() {
             </Suspense>
           </Canvas>
         )}
+        <FpsCounter />
+        <AmbientAudioControl />
       </div>
       {sceneRoute === 'landscape' && (
         <div className="edo-button-wrap" aria-hidden={isTransitioning}>
@@ -78,6 +86,18 @@ function App() {
             onClick={handleTravelToEdo}
           >
             Get me to Edo
+          </button>
+        </div>
+      )}
+      {sceneRoute === 'edo' && !isKotoFocus && (
+        <div className="edo-button-wrap edo-button-wrap--mountains">
+          <button
+            className="edo-button edo-button--mountains"
+            disabled={isKotoFocus}
+            type="button"
+            onClick={() => setIsKotoFocus(true)}
+          >
+            Take me to the montains in the middle
           </button>
         </div>
       )}

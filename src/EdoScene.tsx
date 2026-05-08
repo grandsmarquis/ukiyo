@@ -1,14 +1,21 @@
+import { PerspectiveCamera } from '@react-three/drei'
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
-import type { Group, Texture } from 'three'
+import type { Group, MeshBasicMaterial, PerspectiveCamera as ThreePerspectiveCamera, Texture } from 'three'
 import {
   ClampToEdgeWrapping,
   DoubleSide,
-  MeshBasicMaterial,
+  LinearFilter,
+  MathUtils,
   NearestFilter,
   SRGBColorSpace,
   TextureLoader,
+  Vector3,
 } from 'three'
+
+type EdoSceneProps = {
+  focusMode?: boolean
+}
 
 type Performer = {
   id: string
@@ -45,7 +52,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 3,
     frameRows: 2,
-    position: [-1.42, -0.8, 0.25],
+    position: [-1.3, -0.8, 0.25],
     planeSize: [0.525, 1.4],
     bobAmount: 0,
     contact: {
@@ -95,13 +102,127 @@ const performers: Performer[] = [
     flip: true,
   },
   {
+    id: 'spectator-kimono-woman',
+    src: '/assets/ukiyo-e/edo-sprites/spectators/spectator-kimono-woman.png',
+    frameColumns: 8,
+    frameCount: 16,
+    frameRate: 2.1,
+    frameRows: 2,
+    position: [-1.88, -1.54, 0.74],
+    planeSize: [0.46, 0.92],
+    bobAmount: 0.003,
+    contact: {
+      opacity: 0.1,
+      position: [0, -0.39, -0.01],
+      scale: [0.14, 0.026],
+    },
+    frameInset: 0.0015,
+    swayAmount: 0.004,
+    phase: 0.3,
+  },
+  {
+    id: 'spectator-merchant',
+    src: '/assets/ukiyo-e/edo-sprites/spectators/spectator-merchant.png',
+    frameColumns: 8,
+    frameCount: 16,
+    frameRate: 1.95,
+    frameRows: 2,
+    position: [-1.28, -1.5, 0.79],
+    planeSize: [0.5, 0.98],
+    bobAmount: 0.002,
+    contact: {
+      opacity: 0.11,
+      position: [0, -0.41, -0.01],
+      scale: [0.15, 0.028],
+    },
+    frameInset: 0.0015,
+    swayAmount: 0.003,
+    phase: 2.4,
+  },
+  {
+    id: 'spectator-child',
+    src: '/assets/ukiyo-e/edo-sprites/spectators/spectator-child.png',
+    frameColumns: 8,
+    frameCount: 16,
+    frameRate: 2.35,
+    frameRows: 2,
+    position: [-0.46, -1.66, 0.84],
+    planeSize: [0.38, 0.76],
+    bobAmount: 0.004,
+    contact: {
+      opacity: 0.09,
+      position: [0, -0.32, -0.01],
+      scale: [0.11, 0.022],
+    },
+    frameInset: 0.0015,
+    swayAmount: 0.005,
+    phase: 4.1,
+  },
+  {
+    id: 'spectator-retainer',
+    src: '/assets/ukiyo-e/edo-sprites/spectators/spectator-retainer.png',
+    frameColumns: 8,
+    frameCount: 16,
+    frameRate: 1.8,
+    frameRows: 2,
+    position: [0.28, -1.49, 0.76],
+    planeSize: [0.54, 1.02],
+    bobAmount: 0.002,
+    contact: {
+      opacity: 0.11,
+      position: [0, -0.43, -0.01],
+      scale: [0.17, 0.029],
+    },
+    frameInset: 0.0015,
+    swayAmount: 0.003,
+    phase: 6.2,
+  },
+  {
+    id: 'spectator-artisan',
+    src: '/assets/ukiyo-e/edo-sprites/spectators/spectator-artisan.png',
+    frameColumns: 8,
+    frameCount: 16,
+    frameRate: 2.05,
+    frameRows: 2,
+    position: [1.18, -1.61, 0.81],
+    planeSize: [0.46, 0.9],
+    bobAmount: 0.003,
+    contact: {
+      opacity: 0.1,
+      position: [0, -0.38, -0.01],
+      scale: [0.14, 0.026],
+    },
+    frameInset: 0.0015,
+    swayAmount: 0.004,
+    phase: 8.8,
+  },
+  {
+    id: 'spectator-elder',
+    src: '/assets/ukiyo-e/edo-sprites/spectators/spectator-elder.png',
+    frameColumns: 8,
+    frameCount: 16,
+    frameRate: 1.7,
+    frameRows: 2,
+    position: [1.64, -1.55, 0.73],
+    planeSize: [0.44, 0.88],
+    bobAmount: 0.002,
+    contact: {
+      opacity: 0.09,
+      position: [0, -0.37, -0.01],
+      scale: [0.13, 0.024],
+    },
+    frameInset: 0.0015,
+    swayAmount: 0.003,
+    phase: 11.5,
+  },
+  {
     id: 'merchant-walker',
     src: '/assets/ukiyo-e/edo-sprites/walkers/merchant-walker.png',
     frameColumns: 8,
     frameCount: 16,
     frameRate: 7.5,
     frameRows: 2,
-    position: [-5.8, -2.22, 0.52],
+    position: [-5.8, -2.06, 0.52],
     planeSize: [0.72, 1.22],
     bobAmount: 0.015,
     contact: {
@@ -121,7 +242,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 6.8,
     frameRows: 2,
-    position: [5.8, -2.02, 0.48],
+    position: [5.8, -1.86, 0.48],
     planeSize: [0.66, 1.12],
     bobAmount: 0.012,
     contact: {
@@ -142,7 +263,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 5.6,
     frameRows: 2,
-    position: [-5.8, -2.36, 0.62],
+    position: [-5.8, -2.2, 0.62],
     planeSize: [0.7, 1.18],
     bobAmount: 0.008,
     contact: {
@@ -162,7 +283,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 8.8,
     frameRows: 2,
-    position: [5.8, -2.3, 0.66],
+    position: [5.8, -2.14, 0.66],
     planeSize: [0.74, 1.25],
     bobAmount: 0.018,
     contact: {
@@ -183,7 +304,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 6.2,
     frameRows: 2,
-    position: [-5.8, -2.12, 0.5],
+    position: [-5.8, -1.96, 0.5],
     planeSize: [0.68, 1.15],
     bobAmount: 0.01,
     contact: {
@@ -203,7 +324,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 7.1,
     frameRows: 2,
-    position: [5.8, -2.28, 0.58],
+    position: [5.8, -2.12, 0.58],
     planeSize: [0.68, 1.15],
     bobAmount: 0.012,
     contact: {
@@ -224,7 +345,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 7.9,
     frameRows: 2,
-    position: [-5.9, -2.68, 0.56],
+    position: [-5.9, -2.52, 0.56],
     planeSize: [0.76, 1.28],
     bobAmount: 0.014,
     contact: {
@@ -244,7 +365,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 6.4,
     frameRows: 2,
-    position: [5.9, -2.5, 0.49],
+    position: [5.9, -2.34, 0.49],
     planeSize: [0.72, 1.32],
     bobAmount: 0.01,
     contact: {
@@ -265,7 +386,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 5.9,
     frameRows: 2,
-    position: [-5.9, -2.34, 0.44],
+    position: [-5.9, -2.18, 0.44],
     planeSize: [0.66, 1.12],
     bobAmount: 0.007,
     contact: {
@@ -285,7 +406,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 6.6,
     frameRows: 2,
-    position: [5.9, -2.78, 0.6],
+    position: [5.9, -2.62, 0.6],
     planeSize: [0.72, 1.22],
     bobAmount: 0.011,
     contact: {
@@ -306,7 +427,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 7.3,
     frameRows: 2,
-    position: [-5.9, -2.92, 0.64],
+    position: [-5.9, -2.76, 0.64],
     planeSize: [0.9, 1.24],
     bobAmount: 0.013,
     contact: {
@@ -326,7 +447,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 8.4,
     frameRows: 2,
-    position: [5.9, -2.18, 0.4],
+    position: [5.9, -2.02, 0.4],
     planeSize: [0.56, 1.02],
     bobAmount: 0.016,
     contact: {
@@ -347,7 +468,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 6.9,
     frameRows: 2,
-    position: [-6.1, -2.4, 0.46],
+    position: [-6.1, -2.24, 0.46],
     planeSize: [0.82, 1.18],
     bobAmount: 0.011,
     contact: {
@@ -367,7 +488,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 6.7,
     frameRows: 2,
-    position: [6.1, -2.72, 0.57],
+    position: [6.1, -2.56, 0.57],
     planeSize: [0.66, 1.12],
     bobAmount: 0.012,
     contact: {
@@ -388,7 +509,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 5.7,
     frameRows: 2,
-    position: [-6.1, -2.22, 0.42],
+    position: [-6.1, -2.06, 0.42],
     planeSize: [0.72, 1.2],
     bobAmount: 0.008,
     contact: {
@@ -408,7 +529,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 6.1,
     frameRows: 2,
-    position: [6.1, -2.06, 0.38],
+    position: [6.1, -1.9, 0.38],
     planeSize: [0.6, 1.06],
     bobAmount: 0.008,
     contact: {
@@ -429,7 +550,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 7.2,
     frameRows: 2,
-    position: [-6.1, -2.86, 0.66],
+    position: [-6.1, -2.7, 0.66],
     planeSize: [1, 1.24],
     bobAmount: 0.014,
     contact: {
@@ -449,7 +570,7 @@ const performers: Performer[] = [
     frameCount: 16,
     frameRate: 6.5,
     frameRows: 2,
-    position: [6.1, -2.52, 0.51],
+    position: [6.1, -2.36, 0.51],
     planeSize: [0.66, 1.1],
     bobAmount: 0.01,
     contact: {
@@ -466,12 +587,27 @@ const performers: Performer[] = [
 ]
 
 const spriteFrameInset = 0.00125
+const walkerFrameRateMultiplier = 1.2
 const backdropPlaneWidth = 13.8
 const backdropPlaneHeight = 7.76
 const backdropPlaneY = -1.02
 const backdropPlaneZ = -5.4
+const spriteRenderOrderBase = 30
+const spriteRenderOrderDepthScale = 10
+const kotoFocusTarget = performers[0]
+const cinematicFocusDamping = 0.62
+const cinematicFadeDamping = 1.1
+const baseCameraX = 0
+const baseCameraY = 0.25
+const baseCameraZ = 9.5
+const baseCameraFov = 38
 
-function EdoBackdrop() {
+function getPerformerRenderOrder(performer: Performer) {
+  return spriteRenderOrderBase - performer.position[1] * spriteRenderOrderDepthScale
+}
+
+function EdoBackdrop({ focusMode }: { focusMode: boolean }) {
+  const materialRef = useRef<MeshBasicMaterial | null>(null)
   const sourceTexture = useLoader(TextureLoader, '/assets/ukiyo-e/edo-street-stage.png')
   const backdropTexture = useMemo(() => {
     const texture = sourceTexture.clone()
@@ -489,33 +625,93 @@ function EdoBackdrop() {
 
   useEffect(() => () => backdropTexture.dispose(), [backdropTexture])
 
+  useFrame((_, delta) => {
+    const material = materialRef.current
+
+    if (!material) {
+      return
+    }
+
+    const targetOpacity = focusMode ? 0.1 : 1
+    material.opacity = MathUtils.damp(material.opacity, targetOpacity, cinematicFadeDamping, delta)
+  })
+
   return (
     <mesh position={[0, backdropPlaneY, backdropPlaneZ]} renderOrder={0}>
       <planeGeometry args={[backdropPlaneWidth, backdropPlaneHeight]} />
       <meshBasicMaterial
+        ref={materialRef}
         depthWrite={false}
         map={backdropTexture}
+        opacity={1}
         side={DoubleSide}
         toneMapped={false}
+        transparent
       />
     </mesh>
   )
 }
 
-function EdoSprite({ performer }: { performer: Performer }) {
-  const groupRef = useRef<Group>(null)
-  const spriteGroupRef = useRef<Group>(null)
-  const materialRef = useRef<MeshBasicMaterial>(null)
-  const textureRef = useRef<Texture | null>(null)
-  const frameIndexRef = useRef(-1)
+function PastelWash({ focusMode }: { focusMode: boolean }) {
+  const materialRef = useRef<MeshBasicMaterial | null>(null)
+
+  useFrame((_, delta) => {
+    const material = materialRef.current
+
+    if (!material) {
+      return
+    }
+
+    const targetOpacity = focusMode ? 1 : 0
+    material.opacity = MathUtils.damp(material.opacity, targetOpacity, cinematicFadeDamping, delta)
+  })
+
+  return (
+    <mesh position={[0, backdropPlaneY, backdropPlaneZ + 0.08]} renderOrder={20}>
+      <planeGeometry args={[backdropPlaneWidth, backdropPlaneHeight]} />
+      <meshBasicMaterial
+        ref={materialRef}
+        color="#f1d9cd"
+        depthWrite={false}
+        opacity={0}
+        side={DoubleSide}
+        toneMapped={false}
+        transparent
+      />
+    </mesh>
+  )
+}
+
+function EdoSprite({
+  performer,
+  focusMode,
+  isFocusTarget,
+}: {
+  performer: Performer
+  focusMode: boolean
+  isFocusTarget: boolean
+}) {
+  const rootRef = useRef<Group | null>(null)
+  const bodyRef = useRef<Group | null>(null)
+  const materialRef = useRef<MeshBasicMaterial | null>(null)
+  const contactMaterialRef = useRef<MeshBasicMaterial | null>(null)
+  const spriteTextureRef = useRef<Texture | null>(null)
+  const lastFrameRef = useRef(-1)
+  const focusProgressRef = useRef(0)
   const sourceTexture = useLoader(TextureLoader, performer.src)
   const frameInset = performer.frameInset ?? spriteFrameInset
+  const animationFrameRate = performer.travel
+    ? performer.frameRate * walkerFrameRateMultiplier
+    : performer.frameRate
+  const renderOrder = getPerformerRenderOrder(performer)
   const spriteTexture = useMemo(() => {
     const texture = sourceTexture.clone()
+    const spriteFilter = performer.travel ? LinearFilter : NearestFilter
+
     texture.colorSpace = SRGBColorSpace
     texture.generateMipmaps = false
-    texture.magFilter = NearestFilter
-    texture.minFilter = NearestFilter
+    texture.magFilter = spriteFilter
+    texture.minFilter = spriteFilter
     texture.wrapS = ClampToEdgeWrapping
     texture.wrapT = ClampToEdgeWrapping
     texture.repeat.set(
@@ -526,79 +722,87 @@ function EdoSprite({ performer }: { performer: Performer }) {
     texture.needsUpdate = true
 
     return texture
-  }, [frameInset, performer.frameColumns, performer.frameRows, sourceTexture])
+  }, [frameInset, performer.frameColumns, performer.frameRows, performer.travel, sourceTexture])
 
   useEffect(() => {
-    textureRef.current = spriteTexture
+    spriteTextureRef.current = spriteTexture
 
     return () => {
-      textureRef.current = null
+      spriteTextureRef.current = null
       spriteTexture.dispose()
     }
   }, [spriteTexture])
 
-  useFrame((_, delta) => {
-    const now = performance.now() / 1000
-    const frameIndex =
-      Math.floor(now * performer.frameRate + performer.phase) % performer.frameCount
-
-    if (frameIndexRef.current !== frameIndex) {
-      const texture = textureRef.current
-
-      if (texture) {
-        const frameColumn = frameIndex % performer.frameColumns
-        const frameRow = Math.floor(frameIndex / performer.frameColumns)
-
-        texture.offset.x = frameColumn / performer.frameColumns + frameInset
-        texture.offset.y = 1 - (frameRow + 1) / performer.frameRows + frameInset
-        texture.needsUpdate = true
-      }
-
-      frameIndexRef.current = frameIndex
-    }
-
-    const group = groupRef.current
-
-    if (group) {
-      if (performer.travel) {
-        const travelProgress =
-          ((now + performer.travel.offset) % performer.travel.duration) /
-          performer.travel.duration
-
-        group.position.x =
-          performer.travel.fromX +
-          (performer.travel.toX - performer.travel.fromX) * travelProgress
-      }
-
-      group.rotation.y = performer.flip ? Math.PI : 0
-    }
-
-    const spriteGroup = spriteGroupRef.current
-
-    if (spriteGroup) {
-      spriteGroup.position.y =
-        Math.sin(now * performer.frameRate * 0.82 + performer.phase) * performer.bobAmount
-      spriteGroup.rotation.z =
-        Math.sin(now * performer.frameRate * 0.48 + performer.phase) * performer.swayAmount
-    }
-
+  useFrame(({ clock }, delta) => {
+    const sceneTime = clock.getElapsedTime()
+    const root = rootRef.current
+    const body = bodyRef.current
     const material = materialRef.current
+    const texture = spriteTextureRef.current
 
-    if (material) {
-      material.opacity = Math.min(1, material.opacity + delta * 3.5)
+    if (!root || !body || !material || !texture) {
+      return
+    }
+
+    const frameIndex =
+      Math.floor(sceneTime * animationFrameRate + performer.phase) % performer.frameCount
+
+    if (frameIndex !== lastFrameRef.current) {
+      const frameColumn = frameIndex % performer.frameColumns
+      const frameRow = Math.floor(frameIndex / performer.frameColumns)
+
+      texture.offset.x = frameColumn / performer.frameColumns + frameInset
+      texture.offset.y = 1 - (frameRow + 1) / performer.frameRows + frameInset
+      lastFrameRef.current = frameIndex
+    }
+
+    if (performer.travel) {
+      const travelProgress =
+        ((sceneTime + performer.travel.offset) % performer.travel.duration) /
+        performer.travel.duration
+
+      root.position.x =
+        performer.travel.fromX +
+        (performer.travel.toX - performer.travel.fromX) * travelProgress
+    }
+
+    body.position.y =
+      Math.sin(sceneTime * animationFrameRate * 0.82 + performer.phase) * performer.bobAmount
+    body.rotation.z =
+      Math.sin(sceneTime * animationFrameRate * 0.48 + performer.phase) * performer.swayAmount
+
+    focusProgressRef.current = MathUtils.damp(
+      focusProgressRef.current,
+      focusMode ? 1 : 0,
+      1.05,
+      delta,
+    )
+    const nonTargetVisibility = 1 - focusProgressRef.current
+    const visibility = isFocusTarget ? 1 : nonTargetVisibility
+    material.opacity = Math.min(1, sceneTime * 3.5) * visibility
+
+    const contactMaterial = contactMaterialRef.current
+
+    if (contactMaterial && performer.contact) {
+      contactMaterial.opacity = performer.contact.opacity * visibility
     }
   })
 
   return (
-    <group ref={groupRef} position={performer.position}>
-      {performer.contact && (
+    <group
+      ref={rootRef}
+      position={performer.position}
+      rotation-y={performer.flip ? Math.PI : 0}
+    >
+      {performer.contact && !performer.travel && (
         <mesh
           position={performer.contact.position}
-          renderOrder={29}
+          renderOrder={renderOrder - 0.1}
           scale={[performer.contact.scale[0], performer.contact.scale[1], 1]}
         >
           <circleGeometry args={[1, 32]} />
           <meshBasicMaterial
+            ref={contactMaterialRef}
             color="#111111"
             depthWrite={false}
             opacity={performer.contact.opacity}
@@ -608,8 +812,8 @@ function EdoSprite({ performer }: { performer: Performer }) {
           />
         </mesh>
       )}
-      <group ref={spriteGroupRef}>
-        <mesh renderOrder={30}>
+      <group ref={bodyRef}>
+        <mesh renderOrder={renderOrder}>
           <planeGeometry args={performer.planeSize} />
           <meshBasicMaterial
             ref={materialRef}
@@ -627,20 +831,29 @@ function EdoSprite({ performer }: { performer: Performer }) {
   )
 }
 
-function EdoPerformers() {
+function EdoPerformers({ focusMode }: { focusMode: boolean }) {
   return (
     <group>
       {performers.map((performer) => (
-        <EdoSprite key={performer.id} performer={performer} />
+        <EdoSprite
+          key={performer.id}
+          performer={performer}
+          focusMode={focusMode}
+          isFocusTarget={performer.id === kotoFocusTarget.id}
+        />
       ))}
     </group>
   )
 }
 
-export function EdoScene() {
-  const { camera, size } = useThree(({ camera, size }) => ({ camera, size }))
-  const cameraFov = 'fov' in camera ? camera.fov : 38
-  const cameraDistance = Math.abs(camera.position.z - backdropPlaneZ)
+export function EdoScene({ focusMode = false }: EdoSceneProps) {
+  const { size } = useThree(({ size }) => ({ size }))
+  const cameraRef = useRef<ThreePerspectiveCamera | null>(null)
+  const sceneGroupRef = useRef<Group | null>(null)
+  const focusProgressRef = useRef(0)
+  const cameraTargetRef = useRef(new Vector3(0, baseCameraY - 0.12, -1.2))
+  const cameraFov = baseCameraFov
+  const cameraDistance = Math.abs(baseCameraZ - backdropPlaneZ)
   const visibleHeight =
     Math.tan((cameraFov * Math.PI) / 360) * cameraDistance * 2
   const visibleWidth = visibleHeight * (size.width / size.height)
@@ -648,14 +861,61 @@ export function EdoScene() {
     visibleWidth / backdropPlaneWidth,
     visibleHeight / backdropPlaneHeight,
   ) * 1.06
-  const sceneY = camera.position.y - backdropPlaneY * sceneScale
+  const sceneY = baseCameraY - backdropPlaneY * sceneScale
+  const focusScale = sceneScale * 2.36
+  const focusX = -kotoFocusTarget.position[0] * focusScale
+  const focusY = baseCameraY - kotoFocusTarget.position[1] * focusScale
+
+  useFrame((_, delta) => {
+    const sceneGroup = sceneGroupRef.current
+    const sceneCamera = cameraRef.current
+
+    if (!sceneGroup || !sceneCamera) {
+      return
+    }
+
+    focusProgressRef.current = MathUtils.damp(
+      focusProgressRef.current,
+      focusMode ? 1 : 0,
+      cinematicFocusDamping,
+      delta,
+    )
+
+    const focusProgress = MathUtils.smoothstep(focusProgressRef.current, 0, 1)
+    const currentScale = MathUtils.lerp(sceneScale, focusScale, focusProgress)
+    const orbitProgress = Math.sin(focusProgress * Math.PI) * 0.42
+
+    sceneGroup.position.x = MathUtils.lerp(0, focusX, focusProgress)
+    sceneGroup.position.y = MathUtils.lerp(sceneY, focusY, focusProgress)
+    sceneGroup.scale.set(currentScale, currentScale, 1)
+
+    sceneCamera.position.x = MathUtils.lerp(baseCameraX, 0.58, focusProgress) + orbitProgress
+    sceneCamera.position.y = MathUtils.lerp(baseCameraY, 0.55, focusProgress)
+    sceneCamera.position.z = MathUtils.lerp(baseCameraZ, 7.45, focusProgress)
+
+    cameraTargetRef.current.set(
+      MathUtils.lerp(0, 0.18, focusProgress),
+      MathUtils.lerp(baseCameraY - 0.12, 0.42, focusProgress),
+      MathUtils.lerp(-1.2, -2.55, focusProgress),
+    )
+    sceneCamera.lookAt(cameraTargetRef.current)
+  })
 
   return (
     <>
+      <PerspectiveCamera
+        ref={cameraRef}
+        makeDefault
+        position={[baseCameraX, baseCameraY, baseCameraZ]}
+        fov={baseCameraFov}
+        near={0.1}
+        far={80}
+      />
       <color attach="background" args={['#f5f2ea']} />
-      <group position={[0, sceneY, 0]} scale={[sceneScale, sceneScale, 1]}>
-        <EdoBackdrop />
-        <EdoPerformers />
+      <group ref={sceneGroupRef} position={[0, sceneY, 0]} scale={[sceneScale, sceneScale, 1]}>
+        <EdoBackdrop focusMode={focusMode} />
+        <PastelWash focusMode={focusMode} />
+        <EdoPerformers focusMode={focusMode} />
       </group>
     </>
   )

@@ -22,6 +22,111 @@
   touch-action: pan-y;
 }
 
+.fps-counter {
+  position: absolute;
+  top: max(0.85rem, env(safe-area-inset-top));
+  left: max(0.85rem, env(safe-area-inset-left));
+  z-index: 3;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.32rem;
+  min-width: 4.65rem;
+  padding: 0.32rem 0.52rem 0.38rem;
+  border: 1px solid rgba(17, 17, 17, 0.86);
+  color: #111;
+  background: rgba(245, 242, 234, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 242, 234, 0.54),
+    0 0.18rem 0 rgba(17, 17, 17, 0.82);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.fps-counter__value {
+  min-width: 2ch;
+  font-size: 1.18rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+}
+
+.fps-counter__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.ambient-audio {
+  position: absolute;
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.54rem 0.36rem;
+  border: 1px solid rgba(17, 17, 17, 0.86);
+  border-radius: 0;
+  color: #111;
+  background: rgba(245, 242, 234, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 242, 234, 0.54),
+    0 0.18rem 0 rgba(17, 17, 17, 0.82);
+  cursor:
+    url('/assets/brush-cursor.svg') 7 25,
+    pointer;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  line-height: 1;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    background-color 160ms ease;
+}
+
+.ambient-audio:hover,
+.ambient-audio:focus-visible {
+  background-color: rgba(255, 251, 241, 0.92);
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 242, 234, 0.54),
+    0 0.12rem 0 rgba(17, 17, 17, 0.82);
+  transform: translateY(0.06rem);
+}
+
+.ambient-audio:focus-visible {
+  outline: 3px double #111;
+  outline-offset: 0.22rem;
+}
+
+.ambient-audio:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.ambient-audio__mark {
+  display: grid;
+  place-items: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1px solid #111;
+  font-family: Georgia, serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ambient-audio__label {
+  min-width: 4.9rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: uppercase;
+}
+
 .edo-button-wrap {
   position: fixed;
   left: 50%;
@@ -34,7 +139,12 @@
     transform 480ms ease;
 }
 
-.is-transitioning .edo-button-wrap {
+.edo-button-wrap--mountains {
+  width: min(calc(100vw - 2rem), 31rem);
+}
+
+.is-transitioning .edo-button-wrap,
+.is-koto-focus .edo-button-wrap--mountains {
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 0.65rem);
@@ -67,6 +177,13 @@
     box-shadow 160ms ease,
     transform 160ms ease,
     background-color 160ms ease;
+}
+
+.edo-button--mountains {
+  min-height: 3.1rem;
+  padding: 0.4rem 1.6rem 0.48rem;
+  font-size: clamp(1.08rem, 2.2vw, 1.48rem);
+  line-height: 1.08;
 }
 
 .edo-button::before,
