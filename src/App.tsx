@@ -97,7 +97,7 @@ function App() {
             type="button"
             onClick={() => setIsKotoFocus(true)}
           >
-            Take me to the montains in the middle
+            Take me to the montains
           </button>
         </div>
       )}
