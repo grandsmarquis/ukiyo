@@ -597,6 +597,7 @@ const spriteRenderOrderDepthScale = 10
 const kotoFocusTarget = performers[0]
 const cinematicFocusDamping = 0.62
 const cinematicFadeDamping = 1.1
+const cinematicFocusDuration = 8.4
 const baseCameraX = 0
 const baseCameraY = 0.25
 const baseCameraZ = 9.5
@@ -851,6 +852,7 @@ export function EdoScene({ focusMode = false }: EdoSceneProps) {
   const cameraRef = useRef<ThreePerspectiveCamera | null>(null)
   const sceneGroupRef = useRef<Group | null>(null)
   const focusProgressRef = useRef(0)
+  const focusStartedAtRef = useRef<number | null>(null)
   const cameraTargetRef = useRef(new Vector3(0, baseCameraY - 0.12, -1.2))
   const cameraFov = baseCameraFov
   const cameraDistance = Math.abs(baseCameraZ - backdropPlaneZ)
@@ -866,7 +868,7 @@ export function EdoScene({ focusMode = false }: EdoSceneProps) {
   const focusX = -kotoFocusTarget.position[0] * focusScale
   const focusY = baseCameraY - kotoFocusTarget.position[1] * focusScale
 
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
     const sceneGroup = sceneGroupRef.current
     const sceneCamera = cameraRef.current
 
@@ -874,16 +876,29 @@ export function EdoScene({ focusMode = false }: EdoSceneProps) {
       return
     }
 
-    focusProgressRef.current = MathUtils.damp(
-      focusProgressRef.current,
-      focusMode ? 1 : 0,
-      cinematicFocusDamping,
-      delta,
-    )
+    if (focusMode && focusStartedAtRef.current === null) {
+      focusStartedAtRef.current = clock.getElapsedTime()
+    }
+
+    if (focusMode && focusStartedAtRef.current !== null) {
+      focusProgressRef.current = MathUtils.clamp(
+        (clock.getElapsedTime() - focusStartedAtRef.current) / cinematicFocusDuration,
+        0,
+        1,
+      )
+    } else {
+      focusProgressRef.current = MathUtils.damp(
+        focusProgressRef.current,
+        0,
+        cinematicFocusDamping,
+        delta,
+      )
+      focusStartedAtRef.current = null
+    }
 
     const focusProgress = MathUtils.smoothstep(focusProgressRef.current, 0, 1)
     const currentScale = MathUtils.lerp(sceneScale, focusScale, focusProgress)
-    const orbitProgress = Math.sin(focusProgress * Math.PI) * 0.42
+    const orbitProgress = Math.sin(focusProgress * Math.PI) * 0.56
 
     sceneGroup.position.x = MathUtils.lerp(0, focusX, focusProgress)
     sceneGroup.position.y = MathUtils.lerp(sceneY, focusY, focusProgress)
