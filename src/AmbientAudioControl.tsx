@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-
-const AMBIENT_AUDIO_SRC = '/assets/audio/edo-ambience.mp3'
+import { ambientAudioSrc } from './assetManifest'
 
 export function AmbientAudioControl() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -8,7 +7,7 @@ export function AmbientAudioControl() {
   const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
-    const audio = new Audio(AMBIENT_AUDIO_SRC)
+    const audio = new Audio(ambientAudioSrc)
     audio.loop = true
     audio.preload = 'auto'
     audio.volume = 0.36
